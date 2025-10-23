@@ -2,6 +2,11 @@
 name: Setup Cloudflare WARP
 description: Setup Cloudflare WARP for secure network access on GitHub MacOS runners
 
+outputs:
+  certificate_path:
+    description: Path to the Cloudflare inspection certificate
+    value: ${{ steps.install_cert.outputs.certificate_path }}
+
 runs:
   using: composite
   steps:
@@ -30,16 +35,32 @@ runs:
         shasum -a 256 /private/etc/cloudflare-warp-posture.json
 
     - name: Install inspection certificate
+      id: install_cert
       shell: bash
       run: |
-        # Write certificate to temporary file
-        echo "${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_INSPECTION_CERTIFICATE }}" > /tmp/cloudflare-inspection.pem
+        echo "${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_INSPECTION_CERTIFICATE }}" | \
+          sudo sh -c 'cat > /private/etc/cloudflare-inspection.pem'
 
-        # Add certificate to system keychain
-        sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /tmp/cloudflare-inspection.pem
+        sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /private/etc/cloudflare-inspection.pem
 
-        # Clean up temporary file
-        rm /tmp/cloudflare-inspection.pem
+        # Make certificate path available to subsequent steps and platform-specific tools
+        echo "CLOUDFLARE_INSPECTION_CERTIFICATE_PATH=/private/etc/cloudflare-inspection.pem" >> $GITHUB_ENV
+
+        # Node.js
+        echo "NODE_EXTRA_CA_CERTS=/private/etc/cloudflare-inspection.pem" >> $GITHUB_ENV
+
+        # Python (requests, urllib3, etc.)
+        echo "REQUESTS_CA_BUNDLE=/private/etc/cloudflare-inspection.pem" >> $GITHUB_ENV
+
+        # General SSL/TLS tools (curl, wget, etc.)
+        echo "SSL_CERT_FILE=/private/etc/cloudflare-inspection.pem" >> $GITHUB_ENV
+        echo "CURL_CA_BUNDLE=/private/etc/cloudflare-inspection.pem" >> $GITHUB_ENV
+
+        # Git
+        echo "GIT_SSL_CAINFO=/private/etc/cloudflare-inspection.pem" >> $GITHUB_ENV
+
+        # Set output for workflows to reference
+        echo "certificate_path=/private/etc/cloudflare-inspection.pem" >> $GITHUB_OUTPUT
 
     - name: Setup Cloudflare WARP
       uses: Boostport/setup-cloudflare-warp@4e41641ec6b5a3afde97e18a1da9d7b3efd78d32 # v1.17.0
@@ -52,5 +73,5 @@ runs:
       shell: bash
       run: |
         echo "Waiting for WARP connection to be ready..."
-        sleep 180
+        sleep 120
         echo "WARP connection ready"
