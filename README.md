@@ -67,13 +67,33 @@ jobs:
 
 This action requires no inputs
 
+## Outputs
+
+| Output | Description |
+|--------|-------------|
+| `certificate_path` | Path to the Cloudflare inspection certificate (`/private/etc/cloudflare-inspection.pem`) |
+
+## Environment Variables
+
+This action automatically sets the following environment variables for subsequent steps,
+enabling various tools and platforms to use the Cloudflare inspection certificate:
+
+| Variable | Description | Used By |
+|----------|-------------|---------|
+| `CLOUDFLARE_INSPECTION_CERTIFICATE_PATH` | Path to the certificate | General reference |
+| `NODE_EXTRA_CA_CERTS` | Additional CA certificates for Node.js | Node.js, npm, yarn |
+| `REQUESTS_CA_BUNDLE` | CA bundle for Python requests | Python (requests, urllib3) |
+| `SSL_CERT_FILE` | SSL certificate file | curl, wget, OpenSSL-based tools, C/C++ apps |
+| `CURL_CA_BUNDLE` | CA bundle for curl | curl and curl-based tools |
+| `GIT_SSL_CAINFO` | CA info for Git | Git operations |
+
 ## How It Works
 
 1. **Fetches Secrets**: Retrieves all necessary credentials from Vault
 2. **Device Posture Setup**: Creates the device posture check file at `/private/etc/cloudflare-warp-posture.json`
 3. **Certificate Installation**: Adds Cloudflare inspection certificate to macOS system keychain
 4. **WARP Setup**: Calls the Boostport/setup-cloudflare-warp action with authentication
-5. **Stabilization**: Waits 180 seconds for the connection to stabilize
+5. **Stabilization**: Waits for the connection to stabilize
 
 ## Release
 
