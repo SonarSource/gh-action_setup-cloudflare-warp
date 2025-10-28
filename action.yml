@@ -59,8 +59,18 @@ runs:
         # Git
         echo "GIT_SSL_CAINFO=/private/etc/cloudflare-inspection.pem" >> $GITHUB_ENV
 
+        # Java
+        echo "Importing certificate to Java trust store..."
+        sudo keytool -import -alias cloudflare-warp -cacerts -file /private/etc/cloudflare-inspection.pem -storepass changeit -noprompt || true
+
         # Set output for workflows to reference
         echo "certificate_path=/private/etc/cloudflare-inspection.pem" >> $GITHUB_OUTPUT
+
+    - name: Disable Ipv6 for Java
+      shell: bash
+      run: |
+        # Java - prefer IPv4 stack for WARP compatibility
+        echo "JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true" >> $GITHUB_ENV
 
     - name: Setup Cloudflare WARP
       uses: Boostport/setup-cloudflare-warp@4e41641ec6b5a3afde97e18a1da9d7b3efd78d32 # v1.17.0
@@ -73,5 +83,5 @@ runs:
       shell: bash
       run: |
         echo "Waiting for WARP connection to be ready..."
-        sleep 120
+        sleep 180
         echo "WARP connection ready"
