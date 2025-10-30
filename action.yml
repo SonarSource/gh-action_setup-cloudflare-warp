@@ -78,6 +78,7 @@ runs:
         organization: sonarsource
         auth_client_id: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_ID }}
         auth_client_secret: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_SECRET }}
+        version: 'beta'
 
     - name: Wait for WARP connection to be ready
       shell: bash
