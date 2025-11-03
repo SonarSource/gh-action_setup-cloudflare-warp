@@ -9,6 +9,7 @@ GitHub Action to setup Cloudflare WARP with device posture check and inspection 
 - **Certificate Installation**: Installs Cloudflare inspection certificate to system keychain
 - **Fixed Egress CIDR**: All traffic is routed through Cloudflare Egress ranges assigned to SonarSource, allowing us to
   configure Firewalls with IP Allowlist
+- **Beta WARP Client**: Uses the beta version of Cloudflare WARP for the latest features and improvements
 
 ## When to use this action?
 
@@ -87,6 +88,7 @@ enabling various tools and platforms to use the Cloudflare inspection certificat
 | `SSL_CERT_FILE` | Path to combined CA bundle (system CAs + Cloudflare cert) | curl, wget, OpenSSL-based tools, C/C++ apps |
 | `CURL_CA_BUNDLE` | Path to combined CA bundle (system CAs + Cloudflare cert) | curl and curl-based tools |
 | `GIT_SSL_CAINFO` | Path to combined CA bundle (system CAs + Cloudflare cert) | Git operations |
+| `JAVA_TOOL_OPTIONS` | `-Djava.net.preferIPv4Stack=true` (disables IPv6 for WARP compatibility) | Java, Maven, Gradle |
 
 **Note:** The action creates a combined CA bundle at `/private/etc/ca-bundle.pem` that includes both the system's trusted certificates
 and the Cloudflare inspection certificate. This ensures that tools can verify both standard SSL certificates
@@ -101,8 +103,9 @@ and connections inspected by Cloudflare WARP.
    - Creates a combined CA bundle (`/private/etc/ca-bundle.pem`) with system certificates + Cloudflare certificate
    - Imports certificate to Java trust store
    - Sets environment variables for various tools
-4. **WARP Setup**: Calls the Boostport/setup-cloudflare-warp action with authentication
-5. **Stabilization**: Waits for the connection to stabilize
+4. **Java Configuration**: Configures Java to prefer IPv4 stack for WARP compatibility
+5. **WARP Setup**: Calls the Boostport/setup-cloudflare-warp action (beta version) with authentication
+6. **Stabilization**: Waits 180 seconds (3 minutes) for the WARP connection to stabilize
 
 ## Release
 
