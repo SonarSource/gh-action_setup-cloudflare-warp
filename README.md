@@ -80,18 +80,27 @@ enabling various tools and platforms to use the Cloudflare inspection certificat
 
 | Variable | Description | Used By |
 |----------|-------------|---------|
-| `CLOUDFLARE_INSPECTION_CERTIFICATE_PATH` | Path to the certificate | General reference |
-| `NODE_EXTRA_CA_CERTS` | Additional CA certificates for Node.js | Node.js, npm, yarn |
-| `REQUESTS_CA_BUNDLE` | CA bundle for Python requests | Python (requests, urllib3) |
-| `SSL_CERT_FILE` | SSL certificate file | curl, wget, OpenSSL-based tools, C/C++ apps |
-| `CURL_CA_BUNDLE` | CA bundle for curl | curl and curl-based tools |
-| `GIT_SSL_CAINFO` | CA info for Git | Git operations |
+| `CLOUDFLARE_INSPECTION_CERTIFICATE_PATH` | Path to the Cloudflare certificate only | General reference |
+| `NODE_EXTRA_CA_CERTS` | Path to Cloudflare certificate (adds to Node's built-in CAs) | Node.js, npm, yarn |
+| `REQUESTS_CA_BUNDLE` | Path to combined CA bundle (system CAs + Cloudflare cert) | Python (requests, urllib3) |
+| `AWS_CA_BUNDLE` | Path to combined CA bundle (system CAs + Cloudflare cert) | AWS CLI, boto3, botocore |
+| `SSL_CERT_FILE` | Path to combined CA bundle (system CAs + Cloudflare cert) | curl, wget, OpenSSL-based tools, C/C++ apps |
+| `CURL_CA_BUNDLE` | Path to combined CA bundle (system CAs + Cloudflare cert) | curl and curl-based tools |
+| `GIT_SSL_CAINFO` | Path to combined CA bundle (system CAs + Cloudflare cert) | Git operations |
+
+**Note:** The action creates a combined CA bundle at `/private/etc/ca-bundle.pem` that includes both the system's trusted certificates
+and the Cloudflare inspection certificate. This ensures that tools can verify both standard SSL certificates
+and connections inspected by Cloudflare WARP.
 
 ## How It Works
 
 1. **Fetches Secrets**: Retrieves all necessary credentials from Vault
 2. **Device Posture Setup**: Creates the device posture check file at `/private/etc/cloudflare-warp-posture.json`
-3. **Certificate Installation**: Adds Cloudflare inspection certificate to macOS system keychain
+3. **Certificate Installation**:
+   - Adds Cloudflare inspection certificate to macOS system keychain
+   - Creates a combined CA bundle (`/private/etc/ca-bundle.pem`) with system certificates + Cloudflare certificate
+   - Imports certificate to Java trust store
+   - Sets environment variables for various tools
 4. **WARP Setup**: Calls the Boostport/setup-cloudflare-warp action with authentication
 5. **Stabilization**: Waits for the connection to stabilize
 
