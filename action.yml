@@ -65,8 +65,8 @@ runs:
         echo "SSL_CERT_FILE=/private/etc/ca-bundle.pem" >> $GITHUB_ENV
         echo "CURL_CA_BUNDLE=/private/etc/ca-bundle.pem" >> $GITHUB_ENV
 
-        # Git
-        echo "GIT_SSL_CAINFO=/private/etc/cloudflare-inspection.pem" >> $GITHUB_ENV
+        # Git - needs full CA bundle
+        echo "GIT_SSL_CAINFO=/private/etc/ca-bundle.pem" >> $GITHUB_ENV
 
         # Java
         echo "Importing certificate to Java trust store..."
