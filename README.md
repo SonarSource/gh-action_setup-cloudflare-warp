@@ -83,6 +83,7 @@ enabling various tools and platforms to use the Cloudflare inspection certificat
 | `CLOUDFLARE_INSPECTION_CERTIFICATE_PATH` | Path to the certificate | General reference |
 | `NODE_EXTRA_CA_CERTS` | Additional CA certificates for Node.js | Node.js, npm, yarn |
 | `REQUESTS_CA_BUNDLE` | CA bundle for Python requests | Python (requests, urllib3) |
+| `AWS_CA_BUNDLE` | CA bundle for AWS CLI | AWS CLI, boto3, botocore |
 | `SSL_CERT_FILE` | SSL certificate file | curl, wget, OpenSSL-based tools, C/C++ apps |
 | `CURL_CA_BUNDLE` | CA bundle for curl | curl and curl-based tools |
 | `GIT_SSL_CAINFO` | CA info for Git | Git operations |
