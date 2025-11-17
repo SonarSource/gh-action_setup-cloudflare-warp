@@ -92,6 +92,7 @@ runs:
     - name: Wait for WARP connection to be ready
       shell: bash
       run: |
+        warp-cli status
         echo "Waiting for WARP connection to be ready..."
         MAX_WAIT=180
         POLL_INTERVAL=5
