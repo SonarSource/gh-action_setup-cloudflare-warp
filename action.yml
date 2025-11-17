@@ -82,16 +82,9 @@ runs:
         echo "JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true" >> $GITHUB_ENV
 
     - name: Setup Cloudflare WARP
-      uses: Boostport/setup-cloudflare-warp@4e41641ec6b5a3afde97e18a1da9d7b3efd78d32 # v1.17.0
+      uses: SamirM-BE/setup-cloudflare-warp@main
       with:
         organization: sonarsource
         auth_client_id: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_ID }}
         auth_client_secret: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_SECRET }}
         version: 'beta'
-
-    - name: Wait for WARP connection to be ready
-      shell: bash
-      run: |
-        echo "Waiting for WARP connection to be ready..."
-        sleep 180
-        echo "WARP connection ready"
