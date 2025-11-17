@@ -93,5 +93,18 @@ runs:
       shell: bash
       run: |
         echo "Waiting for WARP connection to be ready..."
-        sleep 180
-        echo "WARP connection ready"
+        MAX_WAIT=180
+        POLL_INTERVAL=5
+        ELAPSED=0
+        while [ $ELAPSED -lt $MAX_WAIT ]; do
+          if warp-cli status | grep -q "Status update: Connected\|Successfully connected"; then
+            echo "WARP connection ready"
+            exit 0
+          fi
+          echo "WARP not ready yet, waiting ${POLL_INTERVAL}s... (${ELAPSED}s/${MAX_WAIT}s)"
+          sleep $POLL_INTERVAL
+          ELAPSED=$((ELAPSED + POLL_INTERVAL))
+        done
+        echo "Error: WARP connection did not become ready within ${MAX_WAIT} seconds"
+        warp-cli status
+        exit 1
