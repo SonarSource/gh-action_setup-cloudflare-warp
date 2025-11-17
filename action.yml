@@ -91,7 +91,4 @@ runs:
 
     - name: Wait for WARP connection to be ready
       shell: bash
-      run: |
-        echo "Waiting for WARP connection to be ready..."
-        sleep 180
-        echo "WARP connection ready"
+      run: bash "${{ github.action_path }}/wait-for-warp-connection.sh"
