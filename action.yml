@@ -92,20 +92,18 @@ runs:
     - name: Wait for WARP connection to be ready
       shell: bash
       run: |
-        warp-cli status
-        echo "Waiting for WARP connection to be ready..."
-        MAX_WAIT=180
-        POLL_INTERVAL=5
+        echo "Waiting for https://vault.sonar.build to be reachable..."
+        MAX_WAIT=300
+        POLL_INTERVAL=2
         ELAPSED=0
         while [ $ELAPSED -lt $MAX_WAIT ]; do
-          if warp-cli status | grep -q "Status update: Connected\|Successfully connected"; then
-            echo "WARP connection ready"
+          if curl -s --max-time 5 https://vault.sonar.build > /dev/null 2>&1; then
+            echo "vault.sonar.build is reachable - WARP connection ready"
             exit 0
           fi
-          echo "WARP not ready yet, waiting ${POLL_INTERVAL}s... (${ELAPSED}s/${MAX_WAIT}s)"
+          echo "vault.sonar.build not reachable yet, waiting ${POLL_INTERVAL}s... (${ELAPSED}s/${MAX_WAIT}s)"
           sleep $POLL_INTERVAL
           ELAPSED=$((ELAPSED + POLL_INTERVAL))
         done
-        echo "Error: WARP connection did not become ready within ${MAX_WAIT} seconds"
-        warp-cli status
+        echo "Error: vault.sonar.build did not become reachable within ${MAX_WAIT} seconds"
         exit 1
