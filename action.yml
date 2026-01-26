@@ -84,7 +84,6 @@ runs:
     - name: Setup Cloudflare WARP
       uses: Boostport/setup-cloudflare-warp@4e41641ec6b5a3afde97e18a1da9d7b3efd78d32 # v1.17.0
       with:
-        version:  beta
         organization: sonarsource
         auth_client_id: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_ID }}
         auth_client_secret: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_SECRET }}
@@ -92,3 +91,22 @@ runs:
     - name: Wait for WARP connection to be ready
       shell: bash
       run: bash "${{ github.action_path }}/wait-for-warp-connection.sh"
+
+    - name: Run WARP diagnostics
+      if: failure()
+      shell: bash
+      run: |
+        if command -v warp-diag &> /dev/null; then
+          warp-diag
+        else
+          echo "warp-diag not found"
+        fi
+
+    - name: Upload WARP diagnostics
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: warp-diagnostics
+        path: ~/Desktop/warp-debugging-info-*.zip
+        retention-days: 7
+        if-no-files-found: warn
