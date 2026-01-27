@@ -20,66 +20,14 @@ runs:
           development/kv/data/cloudflare/warp-github-runner device-posture-secret | CLOUDFLARE_DEVICE_SECRET;
           development/kv/data/cloudflare/warp-github-runner inspection-certificate | CLOUDFLARE_INSPECTION_CERTIFICATE;
 
-    - name: Setup Cloudflare WARP Device Posture Check
-      shell: bash
-      run: |
-        # Create directory if it doesn't exist
-        sudo mkdir -p /private/etc
-
-        # Create device posture check file
-        echo "${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_DEVICE_SECRET }}" | \
-          sudo sh -c 'cat > /private/etc/cloudflare-warp-posture.json'
-
-        # Print SHA256 hash for verification
-        echo "SHA256 hash of the posture file:"
-        shasum -a 256 /private/etc/cloudflare-warp-posture.json
-
-    - name: Install inspection certificate
+    - name: Setup prerequisites
       id: install_cert
       shell: bash
+      env:
+        CLOUDFLARE_DEVICE_SECRET: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_DEVICE_SECRET }}
+        CLOUDFLARE_INSPECTION_CERTIFICATE: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_INSPECTION_CERTIFICATE }}
       run: |
-        echo "${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_INSPECTION_CERTIFICATE }}" | \
-          sudo sh -c 'cat > /private/etc/cloudflare-inspection.pem'
-
-        sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /private/etc/cloudflare-inspection.pem
-
-        # Create a combined CA bundle with system certs + Cloudflare cert
-        # This is needed for tools that don't use the macOS keychain (like Python/AWS CLI)
-        python3 -c "import certifi; print(certifi.where())" > /tmp/certifi_path.txt
-        CERTIFI_PATH=$(cat /tmp/certifi_path.txt)
-        sudo sh -c "cat $CERTIFI_PATH /private/etc/cloudflare-inspection.pem > /private/etc/ca-bundle.pem"
-
-        # Make certificate path available to subsequent steps and platform-specific tools
-        echo "CLOUDFLARE_INSPECTION_CERTIFICATE_PATH=/private/etc/cloudflare-inspection.pem" >> $GITHUB_ENV
-
-        # Node.js (adds to built-in CAs, so we only need the Cloudflare cert)
-        echo "NODE_EXTRA_CA_CERTS=/private/etc/cloudflare-inspection.pem" >> $GITHUB_ENV
-
-        # Python (requests, urllib3, etc.) - needs full CA bundle
-        echo "REQUESTS_CA_BUNDLE=/private/etc/ca-bundle.pem" >> $GITHUB_ENV
-
-        # AWS CLI and boto3 - needs full CA bundle
-        echo "AWS_CA_BUNDLE=/private/etc/ca-bundle.pem" >> $GITHUB_ENV
-
-        # General SSL/TLS tools (curl, wget, etc.) - needs full CA bundle
-        echo "SSL_CERT_FILE=/private/etc/ca-bundle.pem" >> $GITHUB_ENV
-        echo "CURL_CA_BUNDLE=/private/etc/ca-bundle.pem" >> $GITHUB_ENV
-
-        # Git - needs full CA bundle
-        echo "GIT_SSL_CAINFO=/private/etc/ca-bundle.pem" >> $GITHUB_ENV
-
-        # Java
-        echo "Importing certificate to Java trust store..."
-        sudo keytool -import -alias cloudflare-warp -cacerts -file /private/etc/cloudflare-inspection.pem -storepass changeit -noprompt || true
-
-        # Set output for workflows to reference
-        echo "certificate_path=/private/etc/cloudflare-inspection.pem" >> $GITHUB_OUTPUT
-
-    - name: Disable Ipv6 for Java
-      shell: bash
-      run: |
-        # Java - prefer IPv4 stack for WARP compatibility
-        echo "JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true" >> $GITHUB_ENV
+        bash "${{ github.action_path }}/scripts/setup-prerequisites.sh"
 
     - name: Setup Cloudflare WARP
       id: setup_warp
