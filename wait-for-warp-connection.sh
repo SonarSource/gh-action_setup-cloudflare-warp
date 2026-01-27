@@ -1,4 +1,5 @@
 #!/bin/bash
+# Polls internal services to verify WARP connectivity (max 300s with 2s intervals)
 set -euo pipefail
 
 PROBE_URL="https://vault.sonar.build"

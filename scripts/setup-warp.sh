@@ -1,4 +1,6 @@
 #!/bin/bash
+# Installs and configures Cloudflare WARP CLI with organization authentication
+# Usage: ./setup-warp.sh --version latest --organization "Org Name" --auth-client-id "id" --auth-client-secret "secret"
 set -euo pipefail
 
 # Parse arguments
@@ -43,7 +45,7 @@ create_plist_config() {
   local plist_xml="/tmp/com.cloudflare.warp.plist"
   local plist_dest="/Library/Managed Preferences/com.cloudflare.warp.plist"
 
-  # Create XML plist
+  # Create XML plist with organization credentials
   cat > "$plist_xml" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -83,6 +85,7 @@ install_warp_cli() {
 }
 
 # Retry with exponential backoff
+# Max 20 attempts (~60s total) with 4s max delay to balance responsiveness vs system load
 retry_with_backoff() {
   local max_attempts=20
   local delay=1
@@ -136,7 +139,7 @@ check_connection() {
   local output
   output=$(warp-cli status 2>&1)
 
-  # Check for Registration Missing error
+  # Check for Registration Missing error (indicates WARP daemon hasn't yet read the plist config)
   if echo "$output" | grep -q "Registration Missing"; then
     echo "Registration Missing error detected, retrying..."
     return 1
@@ -164,6 +167,7 @@ main() {
   echo "Organization: ${ORGANIZATION}"
 
   # Step 1: Create plist configuration BEFORE installing WARP
+  # The plist must exist before WARP installation so the daemon loads it on first start
   create_plist_config
 
   # Step 2: Install WARP
