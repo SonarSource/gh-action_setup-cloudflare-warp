@@ -3,6 +3,7 @@ eval "$(shellspec - -c) exit 1"
 
 # Environment setup
 export TMPDIR="${TMPDIR:-/tmp}"
+# Isolated test directory to safely mock /Library paths without touching system files
 export GLOBAL_TEST_DIR=$(mktemp -d)
 
 Mock brew
@@ -27,7 +28,8 @@ Mock plutil
 End
 
 Mock sudo
-  # Redirect /Library paths to test directory
+  # Redirect /Library paths to test directory to avoid requiring actual sudo
+  # Uses shell parameter expansion ${var#prefix} to strip /Library and prepend test dir
   if [[ "$1" == "mkdir" ]]; then
     shift
     shift  # Skip -p

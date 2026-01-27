@@ -104,8 +104,9 @@ and connections inspected by Cloudflare WARP.
    - Imports certificate to Java trust store
    - Sets environment variables for various tools
 4. **Java Configuration**: Configures Java to prefer IPv4 stack for WARP compatibility
-5. **WARP Setup**: Calls the Boostport/setup-cloudflare-warp action (beta version) with authentication
-6. **Stabilization**: Waits 180 seconds (3 minutes) for the WARP connection to stabilize
+5. **WARP Setup**: Executes custom bash script (`scripts/setup-warp.sh`) that creates plist configuration, installs
+   WARP CLI, and verifies registration/connection with retry logic
+6. **Connection Verification**: Polls internal services to verify WARP connectivity (max 300s)
 
 ## Release
 
@@ -121,6 +122,6 @@ and connections inspected by Cloudflare WARP.
 
     ```shell
     git fetch --tags
-    git update-ref -m "reset: update branch v1 to tag 1.y.z" refs/heads/v1 1.y.z
-    git push origin v1
+    git update-ref -m "reset: update branch v2 to tag v2.y.z" refs/heads/v2 v2.y.z
+    git push origin v2
     ```
