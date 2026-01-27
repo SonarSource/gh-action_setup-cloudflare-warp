@@ -48,28 +48,42 @@ Configured hooks:
 
 ### Action Flow (action.yml)
 
-The composite action executes 6 sequential steps:
+The composite action executes 4 sequential steps:
 
 1. **Get secrets from Vault** - Retrieves 4 credentials using `vault-action-wrapper`:
    - `client-id` / `client-secret` - Cloudflare WARP authentication
    - `device-posture-secret` - Device posture check JSON
    - `inspection-certificate` - Cloudflare TLS inspection certificate PEM
 
-2. **Setup Device Posture Check** - Writes posture JSON to `/private/etc/cloudflare-warp-posture.json`
-
-3. **Install inspection certificate** - Multi-step certificate setup:
+2. **Setup prerequisites** - Calls `scripts/setup-prerequisites.sh` which performs:
+   - Writes device posture JSON to `/private/etc/cloudflare-warp-posture.json`
    - Writes cert to `/private/etc/cloudflare-inspection.pem`
-   - Adds to macOS system keychain (`security add-trusted-cert`)
+   - Adds cert to macOS system keychain (`security add-trusted-cert`)
    - Creates combined CA bundle at `/private/etc/ca-bundle.pem` (system CAs + Cloudflare cert)
-   - Imports to Java trust store (`keytool`)
+   - Imports cert to Java trust store (`keytool`)
    - Sets 7 environment variables for different tools (NODE_EXTRA_CA_CERTS, REQUESTS_CA_BUNDLE, AWS_CA_BUNDLE,
      SSL_CERT_FILE, CURL_CA_BUNDLE, GIT_SSL_CAINFO)
+   - Sets `JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true`
 
-4. **Disable IPv6 for Java** - Sets `JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true`
+3. **Setup Cloudflare WARP** - Calls `scripts/setup-warp.sh` with organization credentials
 
-5. **Setup Cloudflare WARP** - Calls `scripts/setup-warp.sh` with organization credentials
+4. **Wait for WARP connection** - Calls `wait-for-warp-connection.sh` (continues on error)
 
-6. **Wait for WARP connection** - Calls `wait-for-warp-connection.sh` (continues on error)
+### Prerequisites Script: scripts/setup-prerequisites.sh
+
+Consolidates prerequisite setup tasks before WARP installation. Receives secrets via environment variables for security:
+
+- `CLOUDFLARE_DEVICE_SECRET` - Device posture JSON
+- `CLOUDFLARE_INSPECTION_CERTIFICATE` - Certificate PEM
+- `GITHUB_ENV` / `GITHUB_OUTPUT` - GitHub Actions environment files
+
+Main execution flow:
+
+1. **Device Posture Setup** - Writes JSON to `/private/etc/cloudflare-warp-posture.json` and prints SHA256 hash
+2. **Certificate Installation** - Adds cert to keychain, creates CA bundle, sets environment variables, imports to Java trust store
+3. **Java IPv4 Configuration** - Sets `JAVA_TOOL_OPTIONS` for WARP compatibility
+
+Tests in `spec/setup-prerequisites_spec.sh` use ShellSpec mocking to simulate `sudo`, `security`, `keytool`, `python3`, and `shasum` commands.
 
 ### Core Script: scripts/setup-warp.sh
 

@@ -97,16 +97,16 @@ and connections inspected by Cloudflare WARP.
 ## How It Works
 
 1. **Fetches Secrets**: Retrieves all necessary credentials from Vault
-2. **Device Posture Setup**: Creates the device posture check file at `/private/etc/cloudflare-warp-posture.json`
-3. **Certificate Installation**:
+2. **Prerequisites Setup**: Executes `scripts/setup-prerequisites.sh` which:
+   - Creates device posture check file at `/private/etc/cloudflare-warp-posture.json`
    - Adds Cloudflare inspection certificate to macOS system keychain
    - Creates a combined CA bundle (`/private/etc/ca-bundle.pem`) with system certificates + Cloudflare certificate
    - Imports certificate to Java trust store
    - Sets environment variables for various tools
-4. **Java Configuration**: Configures Java to prefer IPv4 stack for WARP compatibility
-5. **WARP Setup**: Executes custom bash script (`scripts/setup-warp.sh`) that creates plist configuration, installs
+   - Configures Java to prefer IPv4 stack for WARP compatibility
+3. **WARP Setup**: Executes `scripts/setup-warp.sh` which creates plist configuration, installs
    WARP CLI, and verifies registration/connection with retry logic
-6. **Connection Verification**: Polls internal services to verify WARP connectivity (max 300s)
+4. **Connection Verification**: Polls internal services to verify WARP connectivity (max 300s)
 
 ## Release
 
