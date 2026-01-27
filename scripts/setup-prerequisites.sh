@@ -1,6 +1,5 @@
 #!/bin/bash
 # Sets up prerequisites for Cloudflare WARP: device posture check, inspection certificate, and Java IPv4 preference
-# Usage: CLOUDFLARE_DEVICE_SECRET="..." CLOUDFLARE_INSPECTION_CERTIFICATE="..." GITHUB_ENV="..." GITHUB_OUTPUT="..." ./setup-prerequisites.sh
 set -euo pipefail
 
 # Validate required environment variables

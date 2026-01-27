@@ -135,6 +135,7 @@ Describe 'setup-prerequisites.sh environment variable output'
   It 'writes certificate environment variables to GITHUB_ENV'
     When run script scripts/setup-prerequisites.sh
     The status should be success
+    The output should include "Prerequisite setup complete"
     The contents of file "$GITHUB_ENV" should include "CLOUDFLARE_INSPECTION_CERTIFICATE_PATH=/private/etc/cloudflare-inspection.pem"
     The contents of file "$GITHUB_ENV" should include "NODE_EXTRA_CA_CERTS=/private/etc/cloudflare-inspection.pem"
     The contents of file "$GITHUB_ENV" should include "REQUESTS_CA_BUNDLE=/private/etc/ca-bundle.pem"
@@ -147,12 +148,14 @@ Describe 'setup-prerequisites.sh environment variable output'
   It 'writes Java IPv4 option to GITHUB_ENV'
     When run script scripts/setup-prerequisites.sh
     The status should be success
+    The output should include "Prerequisite setup complete"
     The contents of file "$GITHUB_ENV" should include "JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true"
   End
 
   It 'writes certificate_path to GITHUB_OUTPUT'
     When run script scripts/setup-prerequisites.sh
     The status should be success
+    The output should include "Prerequisite setup complete"
     The contents of file "$GITHUB_OUTPUT" should include "certificate_path=/private/etc/cloudflare-inspection.pem"
   End
 End
@@ -161,18 +164,21 @@ Describe 'setup-prerequisites.sh file creation'
   It 'creates device posture file'
     When run script scripts/setup-prerequisites.sh
     The status should be success
+    The output should include "Device posture check configured"
     The file "$GLOBAL_TEST_DIR/etc/cloudflare-warp-posture.json" should be exist
   End
 
   It 'creates inspection certificate file'
     When run script scripts/setup-prerequisites.sh
     The status should be success
+    The output should include "Inspection certificate installed"
     The file "$GLOBAL_TEST_DIR/etc/cloudflare-inspection.pem" should be exist
   End
 
   It 'creates combined CA bundle file'
     When run script scripts/setup-prerequisites.sh
     The status should be success
+    The output should include "Inspection certificate installed"
     The file "$GLOBAL_TEST_DIR/etc/ca-bundle.pem" should be exist
   End
 End
