@@ -55,7 +55,7 @@ jobs:
       contents: read
     steps:
       - name: Setup Cloudflare WARP
-        uses: SonarSource/gh-action_setup-cloudflare-warp@v1
+        uses: SonarSource/gh-action_setup-cloudflare-warp@v2
 
       # WARP connection is now ready - proceed with your workflow steps
       - name: Your build steps
