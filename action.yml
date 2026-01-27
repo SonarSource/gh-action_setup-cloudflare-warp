@@ -82,13 +82,25 @@ runs:
         echo "JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true" >> $GITHUB_ENV
 
     - name: Setup Cloudflare WARP
+      id: setup_warp
       uses: Boostport/setup-cloudflare-warp@4e41641ec6b5a3afde97e18a1da9d7b3efd78d32 # v1.17.0
       with:
         version:  beta
         organization: sonarsource
         auth_client_id: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_ID }}
         auth_client_secret: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_SECRET }}
+      continue-on-error: true
 
     - name: Wait for WARP connection to be ready
       shell: bash
-      run: bash "${{ github.action_path }}/wait-for-warp-connection.sh"
+      continue-on-error: true
+      run: |
+        echo "::group::Waiting for WARP connection"
+        if bash "${{ github.action_path }}/wait-for-warp-connection.sh"; then
+          echo "::endgroup::"
+          echo "✅ WARP connection established successfully"
+        else
+          echo "::endgroup::"
+          echo "::warning::⚠️ WARP connection failed - job will continue without WARP connectivity"
+          exit 1
+        fi
