@@ -1,0 +1,15 @@
+name: With Post Step
+description: Execute main commands with automatic post-step cleanup
+
+inputs:
+  main:
+    description: Main command to run
+    required: true
+  post:
+    description: Post command to run after job
+    required: true
+
+runs:
+  using: node20
+  main: main.js
+  post: main.js

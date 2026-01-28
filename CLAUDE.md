@@ -48,26 +48,21 @@ Configured hooks:
 
 ### Action Flow (action.yml)
 
-The composite action executes 4 sequential steps:
+The composite action executes 2 main steps:
 
 1. **Get secrets from Vault** - Retrieves 4 credentials using `vault-action-wrapper`:
    - `client-id` / `client-secret` - Cloudflare WARP authentication
    - `device-posture-secret` - Device posture check JSON
    - `inspection-certificate` - Cloudflare TLS inspection certificate PEM
 
-2. **Setup prerequisites** - Calls `scripts/setup-prerequisites.sh` which performs:
-   - Writes device posture JSON to `/private/etc/cloudflare-warp-posture.json`
-   - Writes cert to `/private/etc/cloudflare-inspection.pem`
-   - Adds cert to macOS system keychain (`security add-trusted-cert`)
-   - Creates combined CA bundle at `/private/etc/ca-bundle.pem` (system CAs + Cloudflare cert)
-   - Imports cert to Java trust store (`keytool`)
-   - Sets 7 environment variables for different tools (NODE_EXTRA_CA_CERTS, REQUESTS_CA_BUNDLE, AWS_CA_BUNDLE,
-     SSL_CERT_FILE, CURL_CA_BUNDLE, GIT_SSL_CAINFO)
-   - Sets `JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true`
-
-3. **Setup Cloudflare WARP** - Calls `scripts/setup-warp.sh` with organization credentials
-
-4. **Wait for WARP connection** - Calls `wait-for-warp-connection.sh` (continues on error)
+2. **Setup WARP with automatic cleanup** - Uses `.github/actions/with-post-step` helper action:
+   - **Main phase** (runs during job):
+     - Calls `scripts/setup-prerequisites.sh` which writes device posture JSON, installs certificate,
+       creates CA bundle, sets environment variables, and configures Java
+     - Calls `scripts/setup-warp.sh` with organization credentials
+     - Calls `scripts/wait-for-warp-connection.sh` (continues on error)
+   - **Post phase** (runs after job completion):
+     - Calls `scripts/cleanup-warp.sh` to disconnect WARP and delete registration
 
 ### Prerequisites Script: scripts/setup-prerequisites.sh
 
@@ -104,7 +99,7 @@ Rationale: Balance responsiveness vs system load.
 **"Registration Missing" error:** Indicates WARP daemon hasn't yet read the plist config file - normal during startup,
 resolved by retry logic.
 
-### Connection Verification: wait-for-warp-connection.sh
+### Connection Verification: scripts/wait-for-warp-connection.sh
 
 Polls `https://vault.sonar.build` (internal service) to verify WARP connectivity:
 
@@ -113,6 +108,27 @@ Polls `https://vault.sonar.build` (internal service) to verify WARP connectivity
 - Uses `curl --max-time 5` with silent mode
 
 This verifies actual connectivity to internal infrastructure, not just WARP connection status.
+
+### Cleanup Script: scripts/cleanup-warp.sh
+
+Automatically runs after job completion via the with-post-step helper action:
+
+- Waits 2 seconds to ensure logs are flushed before network changes
+- Disconnects from WARP using `warp-cli disconnect`
+- Deletes WARP registration using `warp-cli registration delete`
+- Runs silently on errors to avoid failing the workflow
+
+Tests in `spec/cleanup-warp_spec.sh` use ShellSpec mocking to simulate `warp-cli`, `sudo`, and `command` commands.
+
+### Helper Action: .github/actions/with-post-step
+
+Node.js-based helper action that enables post-job cleanup in composite actions:
+
+- Uses Node.js lifecycle hooks (`main` and `post` phases)
+- Accepts `main` and `post` inputs containing shell commands to execute
+- Runs `main` commands during normal job execution
+- Runs `post` commands after job completion (even if job fails)
+- Uses only Node.js built-ins (no dependencies)
 
 ### Testing Strategy
 

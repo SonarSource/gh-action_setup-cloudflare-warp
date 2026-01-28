@@ -10,6 +10,7 @@ GitHub Action to setup Cloudflare WARP with device posture check and inspection 
 - **Fixed Egress CIDR**: All traffic is routed through Cloudflare Egress ranges assigned to SonarSource, allowing us to
   configure Firewalls with IP Allowlist
 - **Beta WARP Client**: Uses the beta version of Cloudflare WARP for the latest features and improvements
+- **Automatic Cleanup**: Automatically disconnects WARP and removes configuration after job completion
 
 ## When to use this action?
 
@@ -62,6 +63,8 @@ jobs:
         run: |
           # Network requests will now go through Cloudflare WARP
           curl -s https://ifconfig.me
+
+      # WARP cleanup happens automatically after job completion
 ```
 
 ## Inputs
@@ -97,16 +100,21 @@ and connections inspected by Cloudflare WARP.
 ## How It Works
 
 1. **Fetches Secrets**: Retrieves all necessary credentials from Vault
-2. **Prerequisites Setup**: Executes `scripts/setup-prerequisites.sh` which:
-   - Creates device posture check file at `/private/etc/cloudflare-warp-posture.json`
-   - Adds Cloudflare inspection certificate to macOS system keychain
-   - Creates a combined CA bundle (`/private/etc/ca-bundle.pem`) with system certificates + Cloudflare certificate
-   - Imports certificate to Java trust store
-   - Sets environment variables for various tools
-   - Configures Java to prefer IPv4 stack for WARP compatibility
-3. **WARP Setup**: Executes `scripts/setup-warp.sh` which creates plist configuration, installs
-   WARP CLI, and verifies registration/connection with retry logic
-4. **Connection Verification**: Polls internal services to verify WARP connectivity (max 300s)
+2. **Setup with Automatic Cleanup**: Uses a helper action to execute setup and register automatic cleanup:
+   - **Prerequisites Setup**: Executes `scripts/setup-prerequisites.sh` which:
+     - Creates device posture check file at `/private/etc/cloudflare-warp-posture.json`
+     - Adds Cloudflare inspection certificate to macOS system keychain
+     - Creates a combined CA bundle (`/private/etc/ca-bundle.pem`) with system certificates + Cloudflare certificate
+     - Imports certificate to Java trust store
+     - Sets environment variables for various tools
+     - Configures Java to prefer IPv4 stack for WARP compatibility
+   - **WARP Setup**: Executes `scripts/setup-warp.sh` which creates plist configuration, installs
+     WARP CLI, and verifies registration/connection with retry logic
+   - **Connection Verification**: Polls internal services to verify WARP connectivity (max 300s)
+3. **Automatic Cleanup** (runs after job completion): Executes `scripts/cleanup-warp.sh` which:
+   - Disconnects from WARP
+   - Deletes WARP registration
+   - Ensures runner is left in a clean state
 
 ## Release
 
