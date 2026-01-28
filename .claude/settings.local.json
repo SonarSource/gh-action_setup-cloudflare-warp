@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(pre-commit run:*)",
+      "Bash(bash run_shell_tests.sh:*)"
+    ]
+  }
+}
