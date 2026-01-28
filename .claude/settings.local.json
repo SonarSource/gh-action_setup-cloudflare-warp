@@ -1,10 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch",
       "Bash(pre-commit run:*)",
-      "Bash(bash run_shell_tests.sh:*)"
+      "Bash(bash run_shell_tests.sh:*)",
+      "mcp__atlassian-jira__getAccessibleAtlassianResources",
+      "mcp__atlassian-jira__getJiraIssue"
     ]
   }
 }

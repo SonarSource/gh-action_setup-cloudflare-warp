@@ -5,7 +5,7 @@ description: Setup Cloudflare WARP for secure network access on GitHub MacOS run
 outputs:
   certificate_path:
     description: Path to the Cloudflare inspection certificate
-    value: ${{ steps.install_cert.outputs.certificate_path }}
+    value: ${{ steps.setup_with_cleanup.outputs.certificate_path }}
 
 runs:
   using: composite
@@ -20,35 +20,37 @@ runs:
           development/kv/data/cloudflare/warp-github-runner device-posture-secret | CLOUDFLARE_DEVICE_SECRET;
           development/kv/data/cloudflare/warp-github-runner inspection-certificate | CLOUDFLARE_INSPECTION_CERTIFICATE;
 
-    - name: Setup prerequisites
-      id: install_cert
-      shell: bash
+    - name: Setup WARP with automatic cleanup
+      id: setup_with_cleanup
+      uses: SonarSource/gh-action_setup-cloudflare-warp/.github/actions/with-post-step@v2
       env:
         CLOUDFLARE_DEVICE_SECRET: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_DEVICE_SECRET }}
         CLOUDFLARE_INSPECTION_CERTIFICATE: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_INSPECTION_CERTIFICATE }}
-      run: |
-        bash "${{ github.action_path }}/scripts/setup-prerequisites.sh"
+        CLOUDFLARE_AUTH_CLIENT_ID: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_ID }}
+        CLOUDFLARE_AUTH_CLIENT_SECRET: ${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_SECRET }}
+      with:
+        main: |
+          echo "::group::Setup WARP"
+          # Setup prerequisites
+          bash "${{ github.action_path }}/scripts/setup-prerequisites.sh"
 
-    - name: Setup Cloudflare WARP
-      id: setup_warp
-      shell: bash
-      run: |
-        bash "${{ github.action_path }}/scripts/setup-warp.sh" \
-          --version beta \
-          --organization sonarsource \
-          --auth-client-id "${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_ID }}" \
-          --auth-client-secret "${{ fromJSON(steps.secrets.outputs.vault).CLOUDFLARE_AUTH_CLIENT_SECRET }}"
+          # Setup WARP
+          bash "${{ github.action_path }}/scripts/setup-warp.sh" \
+            --version beta \
+            --organization sonarsource \
+            --auth-client-id "$CLOUDFLARE_AUTH_CLIENT_ID" \
+            --auth-client-secret "$CLOUDFLARE_AUTH_CLIENT_SECRET"
+          echo "::endgroup::"
 
-    - name: Wait for WARP connection to be ready
-      shell: bash
-      continue-on-error: true
-      run: |
-        echo "::group::Waiting for WARP connection"
-        if bash "${{ github.action_path }}/scripts/wait-for-warp-connection.sh"; then
-          echo "::endgroup::"
-          echo "✅ WARP connection established successfully"
-        else
-          echo "::endgroup::"
-          echo "::warning::⚠️ WARP connection failed - job will continue without WARP connectivity"
-          exit 1
-        fi
+          # Wait for connection (continue on error)
+          echo "::group::Waiting for WARP connection"
+          if bash "${{ github.action_path }}/scripts/wait-for-warp-connection.sh"; then
+            echo "::endgroup::"
+            echo "✅ WARP connection established successfully"
+          else
+            echo "::endgroup::"
+            echo "::warning::WARP connection failed - job will continue without WARP connectivity"
+          fi
+
+        post: |
+          bash "${{ github.action_path }}/scripts/cleanup-warp.sh"
