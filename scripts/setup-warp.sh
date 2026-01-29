@@ -68,20 +68,28 @@ EOF
   sudo mkdir -p "$(dirname "$plist_dest")"
   sudo mv "$plist_xml" "$plist_dest"
 
-  echo "Plist configuration created at $plist_dest"
+  echo "Configuration created"
 }
 
 # Install WARP CLI
 install_warp_cli() {
-  if command -v warp-cli &> /dev/null; then
-    echo "warp-cli already installed, skipping installation"
+  # If version is "latest" or "beta", use homebrew
+  if [[ "$VERSION" == "latest" || "$VERSION" == "beta" ]]; then
+    echo "Installing cloudflare-warp@${VERSION}"
+    brew update
+    brew install --cask "cloudflare-warp@${VERSION}"
     return 0
   fi
 
-  echo "Installing cloudflare-warp@${VERSION}..."
-  brew update
-  brew install --cask "cloudflare-warp@${VERSION}"
-  echo "WARP installation complete"
+  # For specific versions, download and install pkg directly
+  echo "Installing Cloudflare WARP ${VERSION}"
+
+  local pkg_url="https://1111-releases.cloudflareclient.com/mac/Cloudflare_WARP_${VERSION}.pkg"
+  local pkg_file="/tmp/Cloudflare_WARP.pkg"
+
+  curl -sSL "$pkg_url" -o "$pkg_file"
+  sudo installer -pkg "$pkg_file" -target /
+  rm -f "$pkg_file"
 }
 
 # Retry with exponential backoff
@@ -121,7 +129,7 @@ check_registration() {
   output=$(warp-cli settings 2>&1)
 
   if echo "$output" | grep -q "Organization: ${ORGANIZATION}"; then
-    echo "Registration verified for organization: ${ORGANIZATION}"
+    echo "Registration verified"
     return 0
   fi
 
@@ -130,7 +138,6 @@ check_registration() {
 
 # Verify registration with retry
 verify_registration() {
-  echo "Verifying WARP registration..."
   retry_with_backoff check_registration
 }
 
@@ -141,13 +148,12 @@ check_connection() {
 
   # Check for Registration Missing error (indicates WARP daemon hasn't yet read the plist config)
   if echo "$output" | grep -q "Registration Missing"; then
-    echo "Registration Missing error detected, retrying..."
     return 1
   fi
 
   # Check for Connected status
   if echo "$output" | grep -q "Status update: Connected"; then
-    echo "WARP connection verified"
+    echo "Connection verified"
     return 0
   fi
 
@@ -156,15 +162,12 @@ check_connection() {
 
 # Verify connection with retry
 verify_connection() {
-  echo "Verifying WARP connection..."
   retry_with_backoff check_connection
 }
 
 # Main execution
 main() {
-  echo "Starting WARP setup..."
-  echo "Version: ${VERSION}"
-  echo "Organization: ${ORGANIZATION}"
+  echo "Setting up WARP ${VERSION} for ${ORGANIZATION}"
 
   # Step 1: Create plist configuration BEFORE installing WARP
   # The plist must exist before WARP installation so the daemon loads it on first start
@@ -177,13 +180,12 @@ main() {
   verify_registration
 
   # Step 4: Connect to WARP
-  echo "Connecting to WARP..."
   warp-cli connect
 
   # Step 5: Verify connection
   verify_connection
 
-  echo "WARP setup complete!"
+  echo "WARP setup complete"
 }
 
 main
