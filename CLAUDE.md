@@ -88,7 +88,9 @@ it on first start.
 Main execution flow:
 
 1. Create plist config at `/Library/Managed Preferences/com.cloudflare.warp.plist` (binary plist format)
-2. Install WARP CLI via `brew install --cask cloudflare-warp@VERSION`
+2. Install WARP CLI:
+   - For `latest` or `beta`: via Homebrew (`brew install --cask cloudflare-warp@VERSION`)
+   - For semantic versions: download pkg from Cloudflare CDN and install via `installer` command
 3. Verify registration with retry logic (checks `warp-cli settings` for organization name)
 4. Connect to WARP (`warp-cli connect`)
 5. Verify connection with retry logic (checks `warp-cli status` for "Connected")
@@ -139,6 +141,8 @@ Tests in `spec/setup-warp_spec.sh` use ShellSpec's mocking system to:
 3. **Mock sudo** - Redirects `/Library` paths to `$GLOBAL_TEST_DIR` using shell parameter expansion `${path#/Library}`
 4. **Mock plutil** - Succeeds silently (no actual binary plist conversion)
 5. **Mock command** - Simulates `warp-cli` being installed
+6. **Mock curl** - Simulates downloading pkg files for manual installation
+7. **Mock installer** - Simulates macOS pkg installation without actual system modification
 
 All tests run in isolated temp directory (`GLOBAL_TEST_DIR`) to avoid touching system files.
 
@@ -146,13 +150,16 @@ All tests run in isolated temp directory (`GLOBAL_TEST_DIR`) to avoid touching s
 
 ### WARP Version Parameter
 
-The `--version` parameter in `setup-warp.sh` accepts ONLY:
+The `--version` parameter in `setup-warp.sh` accepts:
 
-- `latest` - Latest stable release
-- `beta` - Beta version (currently used)
+- `latest` - Latest stable release (via Homebrew)
+- `beta` - Beta version (via Homebrew)
+- Semantic version (e.g., `2025.9.558.0`) - Specific version downloaded directly from Cloudflare
 
-**Do NOT use arbitrary version numbers** (e.g., `2024.6.474.0`). The parameter is passed directly to
-`brew install --cask cloudflare-warp@VERSION`.
+For semantic versions, the script downloads the pkg file directly from:
+`https://1111-releases.cloudflareclient.com/mac/Cloudflare_WARP_{VERSION}.pkg`
+
+This allows pinning to specific WARP versions for stability and reproducibility.
 
 ### macOS Only
 

@@ -49,13 +49,12 @@ Mock sudo
   fi
 End
 
-Mock command
-  if [[ "$*" == "-v warp-cli" ]]; then
-    # Simulate warp-cli exists
-    true
-  else
-    builtin command "$@"
-  fi
+Mock curl
+  echo "curl $*"
+End
+
+Mock installer
+  echo "installer $*"
 End
 
 Describe 'setup-warp.sh basic execution'
@@ -68,15 +67,21 @@ Describe 'setup-warp.sh basic execution'
   It 'accepts required parameters'
     When run script scripts/setup-warp.sh --version beta --organization sonarsource --auth-client-id test-id --auth-client-secret test-secret
     The status should be success
-    The output should include "Version: beta"
-    The output should include "Organization: sonarsource"
+    The output should include "Setting up WARP beta for sonarsource"
   End
 
-  It 'completes main workflow'
+  It 'uses Homebrew for beta version'
     When run script scripts/setup-warp.sh --version beta --organization sonarsource --auth-client-id test-id --auth-client-secret test-secret
     The status should be success
-    The output should include "Starting WARP setup"
-    The output should include "Plist configuration created"
-    The output should include "WARP setup complete"
+    The output should include "Installing cloudflare-warp@beta"
+    The output should include "brew update"
+  End
+
+  It 'uses manual installation for semantic version'
+    When run script scripts/setup-warp.sh --version 2024.12.474.0 --organization sonarsource --auth-client-id test-id --auth-client-secret test-secret
+    The status should be success
+    The output should include "Installing Cloudflare WARP 2024.12.474.0"
+    The output should include "curl -sSL https://1111-releases.cloudflareclient.com/mac/Cloudflare_WARP_2024.12.474.0.pkg -o /tmp/Cloudflare_WARP.pkg"
+    The output should include "installer -pkg /tmp/Cloudflare_WARP.pkg -target /"
   End
 End

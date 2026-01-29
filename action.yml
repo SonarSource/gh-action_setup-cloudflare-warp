@@ -36,7 +36,7 @@ runs:
 
           # Setup WARP
           bash "${{ github.action_path }}/scripts/setup-warp.sh" \
-            --version beta \
+            --version 2025.9.558.0 \
             --organization sonarsource \
             --auth-client-id "$CLOUDFLARE_AUTH_CLIENT_ID" \
             --auth-client-secret "$CLOUDFLARE_AUTH_CLIENT_SECRET"

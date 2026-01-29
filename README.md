@@ -9,7 +9,7 @@ GitHub Action to setup Cloudflare WARP with device posture check and inspection 
 - **Certificate Installation**: Installs Cloudflare inspection certificate to system keychain
 - **Fixed Egress CIDR**: All traffic is routed through Cloudflare Egress ranges assigned to SonarSource, allowing us to
   configure Firewalls with IP Allowlist
-- **Beta WARP Client**: Uses the beta version of Cloudflare WARP for the latest features and improvements
+- **Version Pinning**: Uses a pinned version of Cloudflare WARP for stability and reproducibility
 - **Automatic Cleanup**: Automatically disconnects WARP and removes configuration after job completion
 
 ## When to use this action?
