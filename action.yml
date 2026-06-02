@@ -12,7 +12,7 @@ runs:
   steps:
     - name: Get secrets from Vault
       id: secrets
-      uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32 # 3.1.0
+      uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
       with:
         secrets: |
           development/kv/data/cloudflare/warp-github-runner client-id | CLOUDFLARE_AUTH_CLIENT_ID;
