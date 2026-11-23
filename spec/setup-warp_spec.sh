@@ -61,7 +61,7 @@ Describe 'setup-warp.sh basic execution'
   It 'requires all parameters'
     When run script scripts/setup-warp.sh --version beta --organization sonarsource
     The status should be failure
-    The output should include "Missing required parameters"
+    The stderr should include "Missing required parameters"
   End
 
   It 'accepts required parameters'
