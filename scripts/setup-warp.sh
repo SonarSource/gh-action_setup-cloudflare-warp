@@ -28,7 +28,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     *)
-      echo "Unknown option: $1"
+      echo "Unknown option: $1" >&2
       exit 1
       ;;
   esac
@@ -106,7 +106,7 @@ retry_with_backoff() {
     fi
 
     if [[ $attempt -eq $max_attempts ]]; then
-      echo "Failed after $max_attempts attempts"
+      echo "Failed after $max_attempts attempts" >&2
       return 1
     fi
 
