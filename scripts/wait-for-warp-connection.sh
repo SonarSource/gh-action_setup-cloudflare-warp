@@ -12,8 +12,8 @@ START_TIME=$(date +%s)
 while true; do
   ELAPSED=$(($(date +%s) - START_TIME))
 
-  if [ $ELAPSED -ge $MAX_WAIT ]; then
-    echo "Error: $PROBE_URL did not become reachable within ${MAX_WAIT} seconds"
+  if [[ $ELAPSED -ge $MAX_WAIT ]]; then
+    echo "Error: $PROBE_URL did not become reachable within ${MAX_WAIT} seconds" >&2
     exit 1
   fi
 

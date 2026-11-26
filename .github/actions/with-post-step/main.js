@@ -1,6 +1,6 @@
-const { spawn } = require('child_process');
-const { appendFileSync } = require('fs');
-const { EOL } = require('os');
+import { spawn } from 'node:child_process';
+import { appendFileSync } from 'node:fs';
+import { EOL } from 'node:os';
 
 // Check if we're in post-execution phase
 if (process.env.STATE_POST) {

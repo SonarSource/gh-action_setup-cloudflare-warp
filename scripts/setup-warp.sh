@@ -36,7 +36,7 @@ done
 
 # Validate required parameters
 if [[ -z "$VERSION" || -z "$ORGANIZATION" || -z "$AUTH_CLIENT_ID" || -z "$AUTH_CLIENT_SECRET" ]]; then
-  echo "Error: Missing required parameters"
+  echo "Error: Missing required parameters" >&2
   exit 1
 fi
 
@@ -87,7 +87,7 @@ install_warp_cli() {
   local pkg_url="https://1111-releases.cloudflareclient.com/mac/Cloudflare_WARP_${VERSION}.pkg"
   local pkg_file="/tmp/Cloudflare_WARP.pkg"
 
-  curl -sSL "$pkg_url" -o "$pkg_file"
+  curl --proto "=https" -sSL "$pkg_url" -o "$pkg_file"
   sudo installer -pkg "$pkg_file" -target /
   rm -f "$pkg_file"
 }
@@ -100,12 +100,12 @@ retry_with_backoff() {
   local max_delay=4
   local attempt=1
 
-  while [ $attempt -le $max_attempts ]; do
+  while [[ $attempt -le $max_attempts ]]; do
     if "$@"; then
       return 0
     fi
 
-    if [ $attempt -eq $max_attempts ]; then
+    if [[ $attempt -eq $max_attempts ]]; then
       echo "Failed after $max_attempts attempts"
       return 1
     fi
@@ -115,7 +115,7 @@ retry_with_backoff() {
 
     # Exponential backoff with max delay
     delay=$((delay * 2))
-    if [ $delay -gt $max_delay ]; then
+    if [[ $delay -gt $max_delay ]]; then
       delay=$max_delay
     fi
 

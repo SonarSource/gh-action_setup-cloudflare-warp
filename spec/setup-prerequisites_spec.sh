@@ -63,10 +63,12 @@ setup() {
   # Create GITHUB_ENV and GITHUB_OUTPUT files
   touch "$GITHUB_ENV"
   touch "$GITHUB_OUTPUT"
+  return 0
 }
 
 cleanup() {
   rm -rf "$GLOBAL_TEST_DIR"
+  return 0
 }
 
 BeforeEach 'setup'
