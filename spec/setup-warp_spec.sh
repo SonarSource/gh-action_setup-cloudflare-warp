@@ -61,7 +61,7 @@ Describe 'setup-warp.sh basic execution'
   It 'requires all parameters'
     When run script scripts/setup-warp.sh --version beta --organization sonarsource
     The status should be failure
-    The output should include "Missing required parameters"
+    The stderr should include "Missing required parameters"
   End
 
   It 'accepts required parameters'
@@ -81,7 +81,7 @@ Describe 'setup-warp.sh basic execution'
     When run script scripts/setup-warp.sh --version 2024.12.474.0 --organization sonarsource --auth-client-id test-id --auth-client-secret test-secret
     The status should be success
     The output should include "Installing Cloudflare WARP 2024.12.474.0"
-    The output should include "curl -sSL https://1111-releases.cloudflareclient.com/mac/Cloudflare_WARP_2024.12.474.0.pkg -o /tmp/Cloudflare_WARP.pkg"
+    The output should include "curl --proto =https -sSL https://1111-releases.cloudflareclient.com/mac/Cloudflare_WARP_2024.12.474.0.pkg -o /tmp/Cloudflare_WARP.pkg"
     The output should include "installer -pkg /tmp/Cloudflare_WARP.pkg -target /"
   End
 End
